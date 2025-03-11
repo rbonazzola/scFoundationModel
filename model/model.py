@@ -1,7 +1,7 @@
 import torch
 from torch.nn import Module
 
-class InputEmbedding(Module):
+class Model(Module):
     
     def __init__(self):
         super(Model, self).__init__()

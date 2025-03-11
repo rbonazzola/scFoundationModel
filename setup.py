@@ -28,6 +28,7 @@ setup(
         "anndata",
         "transformers",
         "pytorch-lightning",
-        "mlflow"
+        "mlflow",
+        "einsum"
     ],
 )
