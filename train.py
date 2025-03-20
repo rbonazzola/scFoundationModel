@@ -179,7 +179,7 @@ class Trainer:
                 "avg_processing_time": avg_processing_time,
                 "data_loading_time": data_loading_time,
                 "data_loading_time_per_sample": data_loading_time / total_batches / self.BATCH_SIZE,
-                "time_per_sample": avg_processing_time / total_batches / self.BATCH_SIZE,
+                "time_per_sample": epoch_time / total_batches / self.BATCH_SIZE,
             }, step=epoch)
             self.scheduler.step()
             
