@@ -22,6 +22,11 @@ from sklearn.model_selection import train_test_split
 SEED = 42
 BATCH_SIZE = 1
 
+import mlflow
+
+torch.set_float32_matmul_precision('high')
+
+
 
 def main(args):
 
@@ -162,7 +167,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Train the model')
-    parser.add_argument('--data_path', type=str, help='Path to the data', default="./data/CRA004476_transformed.h5ad")
+    parser.add_argument('--data_path', type=str, help='Path to the data', default="./data/transforms/CRA004476_transformed.h5ad")
     # parser.add_argument('--model', type=str, help='Model to use')
     parser.add_argument('--gene_num', type=int, default=40214)
     parser.add_argument('--output', type=str, help='Output path')
