@@ -6,9 +6,19 @@ import torch
 N_CLASSES = 7
 
 class scRNADataset(Dataset):
-    def __init__(self, data):
+    def __init__(self, data, gene_csv=None, top_n_genes=None):
         super().__init__()       
         self.data = data
+        self.top_n_genes = top_n_genes
+        
+        if gene_csv is not None and top_n_genes is not None:
+            selected_genes = pd.read_csv(gene_csv).sort_values("variability", ascending=False).head(self.top_n_genes)
+            selected_positions = selected_genes['position'].values
+            self.data = data[:, selected_positions]
+        else:
+            self.data = data
+
+
         self.N_CLASSES = N_CLASSES
 
     def __getitem__(self, index):
