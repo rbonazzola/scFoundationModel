@@ -29,6 +29,8 @@ setup(
         "transformers",
         "pytorch-lightning",
         "mlflow",
-        "einsum"
+        "einops",
+        "local-attention",
+        "scikit-misc"
     ],
 )
