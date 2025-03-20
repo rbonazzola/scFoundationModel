@@ -1,4 +1,6 @@
 import os
+import torch
+
 
 def save_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_folder):
     """
