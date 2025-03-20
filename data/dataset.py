@@ -2,6 +2,7 @@ import scanpy as sc
 from torch.utils.data import Dataset
 import random
 import torch
+import pandas as pd
 
 N_CLASSES = 7
 

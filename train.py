@@ -41,9 +41,12 @@ class Trainer:
         self.MAX_EPOCHS = args.max_epochs
         self.MAX_BATCHES = args.max_batches
         self.VALIDATE_EVERY = 5
-        self.GRADIENT_ACCUMULATION = 10
+        self.GRADIENT_ACCUMULATION = 1
         self.BATCH_SIZE = args.batch_size or BATCH_SIZE
-        
+        self.TOP_N_GENES = args.top_n_genes
+        self.NUM_WORKERS = args.num_workers or 0
+        self.USING_COMPILE = args.compile
+
         self._load_data(args.data_path)
 
         self.model_args = {
@@ -70,11 +73,11 @@ class Trainer:
             data = sc.read_h5ad(data_path).X
         
         data_train, data_val = train_test_split(data, test_size=0.05, random_state=SEED)
-        self.train_dataset = scRNADataset(data_train)
-        self.val_dataset = scRNADataset(data_val)
+        self.train_dataset = scRNADataset(data_train, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
+        self.val_dataset = scRNADataset(data_val, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         
-        self.train_loader = DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=8)
-        self.val_loader = DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=8)
+        self.train_loader = DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=self.NUM_WORKERS)
+        self.val_loader = DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=self.NUM_WORKERS)
         
         self.N_CLASSES = self.train_dataset.N_CLASSES
         logging.info(f"Data loaded in {time.time() - start_time:.2f} seconds")
@@ -113,7 +116,10 @@ class Trainer:
            "depth": self.model_args["depth"],
            "heads": self.model_args["heads"],
            "local_attn_heads": self.model_args["local_attn_heads"],
-           "platform": os.uname().nodename
+           "platform": os.uname().nodename,
+           "top_n_genes": self.TOP_N_GENES,
+           "num_workers": self.NUM_WORKERS,
+           "using_compile": self.USING_COMPILE
         })
 
         
@@ -226,6 +232,9 @@ if __name__ == "__main__":
     parser.add_argument('--depth', type=int, default=6, help='Number of transformer layers')
     parser.add_argument('--heads', type=int, default=10, help='Number of attention heads')
     parser.add_argument('--local_attn_heads', type=int, default=0, help='Number of local attention heads')
+    parser.add_argument('--highly_variable_genes_file', type=str, default="data/highly_variable_genes.csv", help='File with highly variable genes')
+    parser.add_argument('--top_n_genes', type=int, default=None, help="Number of genes to use")
+    parser.add_argument('--num_workers', type=int, default=None, help="Number of workers to use for data loading.")
 
     args = parser.parse_args()
     trainer = Trainer(args)
