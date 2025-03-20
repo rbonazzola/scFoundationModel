@@ -117,7 +117,7 @@ class Trainer:
         })
 
         
-        for epoch in range(1, self.EPOCHS + 1):
+        for epoch in range(1, self.MAX_EPOCHS + 1):
             epoch_start_time = time.time()
             self.model.train()
             
