@@ -111,7 +111,8 @@ class Trainer:
            "embedding_dim": self.model_args["dim"],
            "depth": self.model_args["depth"],
            "heads": self.model_args["heads"],
-           "local_attn_heads": self.model_args["local_attn_heads"]
+           "local_attn_heads": self.model_args["local_attn_heads"],
+           "platform": os.getenv("HOSTNAME")
         })
 
         
