@@ -1,3 +1,4 @@
+import os 
 import time
 import logging
 
@@ -21,15 +22,17 @@ import dagshub
 
 from tqdm import tqdm
 
-import os 
-
 SEED = 42
 
 torch.set_float32_matmul_precision('high')
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-dagshub.init("geneformer", "rbonazzola", mlflow=True)
+dagshub.init("scFoundationModel", "rbonazzola", mlflow=True)
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters())
+
 
 class Trainer:
     def __init__(self, args):
@@ -62,6 +65,7 @@ class Trainer:
         self._initialize_model()
         self._initialize_training_components()
     
+
     def _load_data(self, data_path):
         logging.info("Loading data")
         start_time = time.time()
@@ -82,6 +86,7 @@ class Trainer:
         self.N_CLASSES = self.train_dataset.N_CLASSES
         logging.info(f"Data loaded in {time.time() - start_time:.2f} seconds")
     
+
     def _initialize_model(self):
         logging.info("Initializing model")
         start_time = time.time()
@@ -99,7 +104,7 @@ class Trainer:
     def _initialize_training_components(self):
         
         self.optimizer = Adam(self.model.parameters(), lr=self.LEARNING_RATE)
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.1)
+        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=1)
         self.loss_fn = nn.CrossEntropyLoss(ignore_index=self.N_CLASSES - 1, reduction='mean')
         self.softmax = nn.Softmax(dim=-1)
     
@@ -119,7 +124,8 @@ class Trainer:
            "platform": os.uname().nodename,
            "top_n_genes": self.TOP_N_GENES,
            "num_workers": self.NUM_WORKERS,
-           "using_compile": self.USING_COMPILE
+           "using_compile": self.USING_COMPILE,
+           "n_parameters": count_parameters(self.model)
         })
 
         
@@ -129,19 +135,22 @@ class Trainer:
             
             batch_times = []
             processing_times = []
+            mask_times = []
             total_batches = 0
             running_loss = 0.0
             
             for index, data in tqdm(enumerate(self.train_loader)):
+
                 if self.MAX_BATCHES and index >= self.MAX_BATCHES:
                     break
                 
                 batch_start_time = time.time()
                 data = data.to(self.device)
+
+                mask_start_time = time.time()
                 data, labels = data_mask(data)
-                data = data.to(torch.long)
-                labels = labels.to(torch.long)
-                
+                mask_time = time.time() - mask_start_time
+
                 processing_start_time = time.time()
                 
                 with torch.cuda.amp.autocast(enabled=self.use_half_precision):
@@ -159,6 +168,7 @@ class Trainer:
                 
                 batch_times.append(batch_time)
                 processing_times.append(processing_time)
+                mask_times.append(mask_time)
                 running_loss += loss.item()
                 total_batches += 1
             
@@ -166,7 +176,8 @@ class Trainer:
             avg_batch_time = sum(batch_times) / total_batches if total_batches > 0 else 0
             avg_processing_time = sum(processing_times) / total_batches if total_batches > 0 else 0
             data_loading_time = epoch_time - sum(batch_times)
-            
+            avg_mask_time = sum(mask_times) / total_batches if total_batches > 0 else 0
+
             epoch_loss = running_loss / total_batches
 
             logging.info(f'Epoch {epoch}: Loss = {running_loss / total_batches:.6f}')
@@ -180,7 +191,9 @@ class Trainer:
                 "data_loading_time": data_loading_time,
                 "data_loading_time_per_sample": data_loading_time / total_batches / self.BATCH_SIZE,
                 "time_per_sample": epoch_time / total_batches / self.BATCH_SIZE,
-            }, step=epoch)
+                "avg_mask_time": avg_mask_time,
+                "train_loss": epoch_loss}, step=epoch)
+            
             self.scheduler.step()
             
             if epoch % self.VALIDATE_EVERY == 0:
