@@ -71,7 +71,10 @@ def main(args):
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    model = torch.compile(model)
+
+    if args.compile:
+        model = torch.compile(model)
+        
     model_init_end = time.time()
     logging.info(f"Model initialized in {model_init_end - model_init_start:.2f} seconds")
     
