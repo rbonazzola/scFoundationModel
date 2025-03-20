@@ -21,8 +21,9 @@ import dagshub
 
 from tqdm import tqdm
 
+import os 
+
 SEED = 42
-BATCH_SIZE = 1
 
 torch.set_float32_matmul_precision('high')
 
@@ -37,7 +38,7 @@ class Trainer:
         self.use_half_precision = args.half_precision and self.device.type == "cuda"
         self.SEQ_LEN = args.gene_num + 1
         self.LEARNING_RATE = args.lr
-        self.EPOCHS = args.epochs
+        self.MAX_EPOCHS = args.max_epochs
         self.MAX_BATCHES = args.max_batches
         self.VALIDATE_EVERY = 5
         self.GRADIENT_ACCUMULATION = 10
@@ -103,7 +104,7 @@ class Trainer:
         logging.info("Starting training")
         mlflow.start_run()
         mlflow.log_params({
-           "epochs": self.EPOCHS, 
+           "max_epochs": self.MAX_EPOCHS, 
            "learning_rate": self.LEARNING_RATE, 
            "batch_size": self.BATCH_SIZE,
            "n_batches": self.MAX_BATCHES,
@@ -214,8 +215,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train the model')
     parser.add_argument('--data_path', type=str, default="./data/transforms/CRA004476_transformed.h5ad")
     parser.add_argument('--gene_num', type=int, default=40214)
-    parser.add_argument('--epochs', type=int, default=100)
-    parser.add_argument('--batch_size', type=int)
+    parser.add_argument('--max_epochs', type=int, default=100)
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--compile', action='store_true', default=False)
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--half_precision', action='store_true', default=False, help='Use FP16 for faster training')
