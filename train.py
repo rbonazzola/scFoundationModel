@@ -113,7 +113,7 @@ class Trainer:
            "depth": self.model_args["depth"],
            "heads": self.model_args["heads"],
            "local_attn_heads": self.model_args["local_attn_heads"],
-           "platform": os.getenv("HOSTNAME")
+           "platform": os.uname().nodename
         })
 
         
