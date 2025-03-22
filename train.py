@@ -44,7 +44,7 @@ class Trainer:
         self.MAX_EPOCHS = args.max_epochs
         self.MAX_BATCHES = args.max_batches
         self.VALIDATE_EVERY = 5
-        self.GRADIENT_ACCUMULATION = 1
+        self.GRADIENT_ACCUMULATION = args.gradient_accumulation or GRADIENT_ACCUMULATION
         self.BATCH_SIZE = args.batch_size or BATCH_SIZE
         self.TOP_N_GENES = args.top_n_genes
         self.NUM_WORKERS = args.num_workers or 0
@@ -130,12 +130,12 @@ class Trainer:
 
         
         for epoch in range(1, self.MAX_EPOCHS + 1):
+            
             epoch_start_time = time.time()
             self.model.train()
             
-            batch_times = []
-            processing_times = []
-            mask_times = []
+            batch_times, processing_times, mask_times = [], [], []
+            
             total_batches = 0
             running_loss = 0.0
             
@@ -143,34 +143,44 @@ class Trainer:
 
                 if self.MAX_BATCHES and index >= self.MAX_BATCHES:
                     break
+            
+                batch_start_time = time.time()           
                 
-                batch_start_time = time.time()
                 data = data.to(self.device)
-
+            
+                # ──────── MASKING ────────
                 mask_start_time = time.time()
                 data, labels = data_mask(data)
                 mask_time = time.time() - mask_start_time
-
+                torch.cuda.synchronize()
+            
+                # ──────── FORWARD + LOSS ────────
                 processing_start_time = time.time()
                 
-                with torch.cuda.amp.autocast(enabled=self.use_half_precision):
-                    logits = self.model(data)  # Performer execution
-                    loss = self.loss_fn(logits.transpose(1, 2), labels) / self.GRADIENT_ACCUMULATION
-                
+                with torch.cuda.amp.autocast(enabled=self.use_half_precision):                                       
+                    logits = self.model(data)
+                    torch.cuda.synchronize()
+                loss = self.loss_fn(logits.transpose(1, 2), labels) / self.GRADIENT_ACCUMULATION
+            
+                # ──────── BACKWARD ────────
                 loss.backward()
-                
+            
+                # ──────── OPTIMIZER STEP ────────
                 if index % self.GRADIENT_ACCUMULATION == 0:
                     self.optimizer.step()
                     self.optimizer.zero_grad()
-                
+            
+                # ──────── TIME COLLECTION ────────
                 processing_time = time.time() - processing_start_time
                 batch_time = time.time() - batch_start_time
                 
                 batch_times.append(batch_time)
                 processing_times.append(processing_time)
                 mask_times.append(mask_time)
+                
                 running_loss += loss.item()
                 total_batches += 1
+
             
             epoch_time = time.time() - epoch_start_time
             avg_batch_time = sum(batch_times) / total_batches if total_batches > 0 else 0
@@ -238,6 +248,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--compile', action='store_true', default=False)
     parser.add_argument('--lr', type=float, default=3e-4)
+    parser.add_argument('--gradient_accumulation', type=int, default=10)
     parser.add_argument('--half_precision', action='store_true', default=False, help='Use FP16 for faster training')
     parser.add_argument('--max_batches', type=int, default=None, help='Limit training to a given number of batches')
     parser.add_argument('--use-flash-attention', '--use_flash_attention', action='store_true', default=False, help='Limit training to a given number of batches')
