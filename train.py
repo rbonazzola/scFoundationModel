@@ -9,7 +9,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from data.dataset import scRNADataset
+from data.multi_file_dataset import MultiScRNADataset as scRNADataset
 from model.performer.performer import PerformerLM
 from utils import save_ckpt
 import scanpy as sc
@@ -77,8 +77,10 @@ class Trainer:
             data = sc.read_h5ad(data_path).X
         
         data_train, data_val = train_test_split(data, test_size=0.05, random_state=SEED)
-        self.train_dataset = scRNADataset(data_train, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
-        self.val_dataset = scRNADataset(data_val, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
+        self.train_dataset = scRNADataset("/home/rbonazzola/subsetted")
+        self.val_dataset = scRNADataset("/home/rbonazzola/subsetted")
+        # self.train_dataset = scRNADataset(data_train, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
+        # self.val_dataset = scRNADataset(data_val, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=self.NUM_WORKERS)
         self.val_loader = DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=self.NUM_WORKERS)
@@ -243,14 +245,14 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Train the model')
     parser.add_argument('--data_path', type=str, default="./data/transforms/CRA004476_transformed.h5ad")
-    parser.add_argument('--gene_num', type=int, default=40214)
+    parser.add_argument('--gene_num', type=int, default=4001)
     parser.add_argument('--max_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--compile', action='store_true', default=False)
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--gradient_accumulation', type=int, default=10)
     parser.add_argument('--half_precision', action='store_true', default=False, help='Use FP16 for faster training')
-    parser.add_argument('--max_batches', type=int, default=None, help='Limit training to a given number of batches')
+    parser.add_argument('--max_batches', type=int, default=100000, help='Limit training to a given number of batches')
     parser.add_argument('--use-flash-attention', '--use_flash_attention', action='store_true', default=False, help='Limit training to a given number of batches')
     parser.add_argument('--embedding_dim', type=int, default=200, help='Embedding dimension')
     parser.add_argument('--depth', type=int, default=6, help='Number of transformer layers')

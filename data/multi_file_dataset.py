@@ -15,6 +15,7 @@ class MultiScRNADataset(Dataset):
         self.adata_list = []
         self.lengths = []
         self.cumulative_lengths = []
+        self.N_CLASSES = N_CLASSES
 
         # Load all .h5ad files in the folder
         h5ad_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.h5ad')])
