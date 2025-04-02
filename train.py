@@ -208,8 +208,8 @@ class Trainer:
             
             self.scheduler.step()
             
-            if epoch % self.VALIDATE_EVERY == 0:
-                self.validate(epoch)
+            # if epoch % self.VALIDATE_EVERY == 0:
+              #  self.validate(epoch)
                 
             save_ckpt(epoch, self.model, self.optimizer, self.scheduler, epoch_loss, "performer_model", "./checkpoints")
         
@@ -245,7 +245,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Train the model')
     parser.add_argument('--data_path', type=str, default="./data/transforms/CRA004476_transformed.h5ad")
-    parser.add_argument('--gene_num', type=int, default=4001)
+    parser.add_argument('--gene_num', type=int, default=3932)
     parser.add_argument('--max_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--compile', action='store_true', default=False)

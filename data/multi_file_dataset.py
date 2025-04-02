@@ -17,18 +17,28 @@ class MultiScRNADataset(Dataset):
         self.cumulative_lengths = []
         self.N_CLASSES = N_CLASSES
 
-        # Load all .h5ad files in the folder
         h5ad_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.h5ad')])
-        for filename in h5ad_files:
-            path = os.path.join(folder_path, filename)
+        self.file_paths = [os.path.join(folder_path, f) for f in h5ad_files]
+
+        gene_sets = []
+        for path in self.file_paths:
+            adata = sc.read_h5ad(path, backed='r')
+            gene_sets.append(set(adata.var_names))
+            adata.file.close()
+
+        common_genes = set.intersection(*gene_sets)
+
+        # Load all .h5ad files in the folder
+        first_adata = sc.read_h5ad(self.file_paths[0], backed='r')
+        ordered_genes = [g for g in first_adata.var_names if g in common_genes][:top_n_genes]
+        first_adata.file.close()
+
+        self.selected_genes = ordered_genes
+
+        # 4. Cargar datos subseteados
+        for path in self.file_paths:
             adata = sc.read_h5ad(path)
-
-            # Subset genes if needed
-            if gene_csv is not None and top_n_genes is not None:
-                selected_genes = pd.read_csv(gene_csv).sort_values("variability", ascending=False).head(top_n_genes)
-                selected_positions = selected_genes['position'].values
-                adata = adata[:, selected_positions]
-
+            adata = adata[:, self.selected_genes]
             self.adata_list.append(adata)
             self.lengths.append(adata.shape[0])
 
