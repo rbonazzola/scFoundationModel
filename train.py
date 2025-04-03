@@ -250,7 +250,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--compile', action='store_true', default=False)
     parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--gradient_accumulation', type=int, default=10)
+    parser.add_argument('--gradient_accumulation', type=int, default=1)
     parser.add_argument('--half_precision', action='store_true', default=False, help='Use FP16 for faster training')
     parser.add_argument('--max_batches', type=int, default=100000, help='Limit training to a given number of batches')
     parser.add_argument('--use-flash-attention', '--use_flash_attention', action='store_true', default=False, help='Limit training to a given number of batches')
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     parser.add_argument('--local_attn_heads', type=int, default=0, help='Number of local attention heads')
     parser.add_argument('--highly_variable_genes_file', type=str, default="data/highly_variable_genes.csv", help='File with highly variable genes')
     parser.add_argument('--top_n_genes', type=int, default=None, help="Number of genes to use")
-    parser.add_argument('--num_workers', type=int, default=None, help="Number of workers to use for data loading.")
+    parser.add_argument('--num_workers', type=int, default=4, help="Number of workers to use for data loading.")
 
     args = parser.parse_args()
     trainer = Trainer(args)
