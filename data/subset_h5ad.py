@@ -7,13 +7,11 @@ import os
 def subset_h5ad_by_gene_list(h5ad_path, gene_list, output_folder):
     adata = sc.read_h5ad(h5ad_path)
 
-    # Filtrar solo genes presentes y respetar el orden dado
     genes_in_adata = set(adata.var_names)
     genes_to_keep = [gene for gene in gene_list if gene in genes_in_adata]
 
     adata_subset = adata[:, genes_to_keep].copy()
 
-    # Guardar nuevo archivo
     base_name = os.path.splitext(os.path.basename(h5ad_path))[0]
     output_path = os.path.join(output_folder, f"{base_name}_subset.h5ad")
     adata_subset.write(output_path)
@@ -30,7 +28,6 @@ if __name__ == "__main__":
 
     os.makedirs(args.output_folder, exist_ok=True)
 
-    # Leer lista de genes (respeta orden)
     genes_df = pd.read_csv(args.gene_list_csv)
     gene_list = genes_df.iloc[:, 0].tolist()
 

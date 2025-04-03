@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 import os
 
-def select_highly_variable_genes(h5ad_path, top_n=2000, output_csv=None):
+def select_highly_variable_genes(h5ad_path, top_n=20000, output_csv=None):
     """ 
     Select the top N highly variable genes using Scanpy's method (adjusted dispersion).
     
@@ -41,7 +41,7 @@ def select_highly_variable_genes(h5ad_path, top_n=2000, output_csv=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Select highly variable genes from an H5AD file.")
     parser.add_argument("h5ad_path", help="Path to the input .h5ad file")
-    parser.add_argument("--top_n", type=int, default=2000, help="Number of genes to select (default: 2000)")
+    parser.add_argument("--top_n", type=int, default=20000, help="Number of genes to select (default: 20000)")
     parser.add_argument("--output_csv", default=None, help="Path to output CSV file (default: auto-generated)")
 
     args = parser.parse_args()

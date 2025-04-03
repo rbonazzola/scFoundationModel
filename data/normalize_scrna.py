@@ -21,6 +21,7 @@ def normalize_and_log(input_path, output_path=None, output_folder="."):
     sc.pp.log1p(adata, base=2)
 
     print(f"💾 Writing: {output_path}")
+    adata.raw = None
     adata.write(output_path)
     print("✅ Done.")
 
