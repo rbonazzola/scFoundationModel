@@ -114,6 +114,7 @@ class Trainer:
     
     def train(self):
         logging.info("Starting training")
+        print(f"{type(self.MASK_PROBABILITY)=}")
         mlflow.start_run()
         mlflow.log_params({
            "max_epochs": self.MAX_EPOCHS, 
@@ -130,7 +131,7 @@ class Trainer:
            "num_workers": self.NUM_WORKERS,
            "using_compile": self.USING_COMPILE,
            "n_parameters": count_parameters(self.model),
-           "mask_probability": self.mask_probability
+           "mask_probability": self.MASK_PROBABILITY
         })
 
         
@@ -155,7 +156,7 @@ class Trainer:
             
                 # ──────── MASKING ────────
                 mask_start_time = time.time()
-                data, labels = data_mask(data, mask_prob=self.mask_probability)
+                data, labels = data_mask(data, mask_prob=self.MASK_PROBABILITY)
                 mask_time = time.time() - mask_start_time
                 torch.cuda.synchronize()
             
@@ -247,7 +248,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Train the model')
-    parser.add_argument('--data_path', type=str, default=f"{os.getenv('HOME')}/nobackup/data/scrna/subsetted")
+    parser.add_argument('--data_path', type=str, default=f"{os.getenv('HOME')}/subsetted")
     parser.add_argument('--gene_num', type=int, default=3932)
     parser.add_argument('--max_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=1)
@@ -257,7 +258,7 @@ if __name__ == "__main__":
     parser.add_argument('--half_precision', action='store_true', default=False, help='Use FP16 for faster training')
     parser.add_argument('--max_batches', type=int, default=100000, help='Limit training to a given number of batches')
     parser.add_argument('--use-flash-attention', '--use_flash_attention', action='store_true', default=False, help='Limit training to a given number of batches')
-    parser.add_argument('--mask-probability', '--mask_probability', default=0.15, help='Masking probability during training')
+    parser.add_argument('--mask-probability', '--mask_probability', default=0.15, help='Masking probability during training', type=float)
     parser.add_argument('--embedding_dim', type=int, default=200, help='Embedding dimension')
     parser.add_argument('--depth', type=int, default=6, help='Number of transformer layers')
     parser.add_argument('--heads', type=int, default=10, help='Number of attention heads')
