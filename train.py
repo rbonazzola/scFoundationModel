@@ -49,6 +49,7 @@ class Trainer:
         self.TOP_N_GENES = args.top_n_genes
         self.NUM_WORKERS = args.num_workers or 0
         self.USING_COMPILE = args.compile
+        self.MASK_PROBABILITY = args.mask_probability
 
         self._load_data(args.data_path)
 
@@ -69,16 +70,17 @@ class Trainer:
     def _load_data(self, data_path):
         logging.info("Loading data")
         start_time = time.time()
-        if data_path.endswith("gz"):
-            import gzip
-            with gzip.open(data_path) as f:
-                data = sc.read_h5ad(f).X
-        else:
-            data = sc.read_h5ad(data_path).X
+        #if data_path.endswith("gz"):
+         #   import gzip
+          #  with gzip.open(data_path) as f:
+           #     data = sc.read_h5ad(f).X
+        #else:
+         #   data = sc.read_h5ad(data_path).X
         
-        data_train, data_val = train_test_split(data, test_size=0.05, random_state=SEED)
-        self.train_dataset = scRNADataset("/home/rbonazzola/subsetted")
-        self.val_dataset = scRNADataset("/home/rbonazzola/subsetted")
+        # data_train, data_val = train_test_split(data, test_size=0.05, random_state=SEED)
+        self.train_dataset = scRNADataset(args.data_path)
+        self.val_dataset = self.train_dataset
+        # scRNADataset(args.data_path)
         # self.train_dataset = scRNADataset(data_train, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         # self.val_dataset = scRNADataset(data_val, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         
@@ -127,7 +129,8 @@ class Trainer:
            "top_n_genes": self.TOP_N_GENES,
            "num_workers": self.NUM_WORKERS,
            "using_compile": self.USING_COMPILE,
-           "n_parameters": count_parameters(self.model)
+           "n_parameters": count_parameters(self.model),
+           "mask_probability": self.mask_probability
         })
 
         
@@ -152,7 +155,7 @@ class Trainer:
             
                 # ──────── MASKING ────────
                 mask_start_time = time.time()
-                data, labels = data_mask(data)
+                data, labels = data_mask(data, mask_prob=self.mask_probability)
                 mask_time = time.time() - mask_start_time
                 torch.cuda.synchronize()
             
@@ -244,7 +247,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Train the model')
-    parser.add_argument('--data_path', type=str, default="./data/transforms/CRA004476_transformed.h5ad")
+    parser.add_argument('--data_path', type=str, default=f"{os.getenv('HOME')}/nobackup/data/scrna/subsetted")
     parser.add_argument('--gene_num', type=int, default=3932)
     parser.add_argument('--max_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=1)
@@ -254,6 +257,7 @@ if __name__ == "__main__":
     parser.add_argument('--half_precision', action='store_true', default=False, help='Use FP16 for faster training')
     parser.add_argument('--max_batches', type=int, default=100000, help='Limit training to a given number of batches')
     parser.add_argument('--use-flash-attention', '--use_flash_attention', action='store_true', default=False, help='Limit training to a given number of batches')
+    parser.add_argument('--mask-probability', '--mask_probability', default=0.15, help='Masking probability during training')
     parser.add_argument('--embedding_dim', type=int, default=200, help='Embedding dimension')
     parser.add_argument('--depth', type=int, default=6, help='Number of transformer layers')
     parser.add_argument('--heads', type=int, default=10, help='Number of attention heads')
