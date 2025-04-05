@@ -64,4 +64,4 @@ class MultiScRNADataset(Dataset):
     def __getitem__(self, index):
         file_idx = np.searchsorted(self.cumulative_lengths, index, side='right') - 1
         local_idx = index - self.cumulative_lengths[file_idx]
-        return self.tensor_list[file_idx][local_idx]
+        return self.tensor_list[file_idx][local_idx].long()
