@@ -1,0 +1,21 @@
+#!/bin/bash
+#$ -N scbert             # Job name
+#$ -cwd                  # Run from current working directory
+#$ -l coproc_v100=1
+#$ -l h_rt=48:00:00      # Runtime limit (hh:mm:ss)
+#$ -j y                  # Join stdout and stderr
+
+# Activate your environment (e.g., conda or module load)
+source ~/.bashrc
+conda activate scrna
+
+PATH=${CONDA_PREFIX}/bin:$PATH
+
+python train.py \
+    --data_path ${HOME}/nobackup/data/scrna/root \
+    --compile \
+    --depth 4 \
+    --batch_size 32 \
+    --lr 1e-4 \
+    --num_workers 8 \
+    --mask_probability 0.20
