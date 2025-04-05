@@ -78,9 +78,8 @@ class Trainer:
          #   data = sc.read_h5ad(data_path).X
         
         # data_train, data_val = train_test_split(data, test_size=0.05, random_state=SEED)
-        self.train_dataset = scRNADataset(args.data_path)
-        self.val_dataset = self.train_dataset
-        # scRNADataset(args.data_path)
+        self.train_dataset = scRNADataset(f"{args.data_path}/train")
+        self.val_dataset = scRNADataset(f"{args.data_path}/val")
         # self.train_dataset = scRNADataset(data_train, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         # self.val_dataset = scRNADataset(data_val, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         
@@ -212,10 +211,11 @@ class Trainer:
             
             self.scheduler.step()
             
-            # if epoch % self.VALIDATE_EVERY == 0:
-              #  self.validate(epoch)
-                
-            save_ckpt(epoch, self.model, self.optimizer, self.scheduler, epoch_loss, "performer_model", "./checkpoints")
+            if epoch % self.VALIDATE_EVERY == 0:
+              self.validate(epoch)
+               
+            run_id = mlflow.active_run().info.run_id            
+            save_ckpt(epoch, self.model, self.optimizer, self.scheduler, epoch_loss, f"performer_model", "./checkpoints/{run_id}")
         
         mlflow.end_run()
         logging.info("Training complete")
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Train the model')
-    parser.add_argument('--data_path', type=str, default=f"{os.getenv('HOME')}/subsetted")
+    parser.add_argument('--data_path', type=str, default=f"{os.getenv('HOME')}/data/scrna/root")
     parser.add_argument('--gene_num', type=int, default=3932)
     parser.add_argument('--max_epochs', type=int, default=100)
     parser.add_argument('--batch_size', type=int, default=1)
