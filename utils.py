@@ -16,5 +16,5 @@ def save_ckpt(epoch, model, optimizer, scheduler, losses, model_name, ckpt_folde
             'scheduler_state_dict': scheduler.state_dict(),
             'losses': losses,
         },
-        f'{ckpt_folder}{model_name}_{epoch}.pth'
+        f'{ckpt_folder}/{model_name}_{epoch}.pth'
     )
