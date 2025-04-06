@@ -44,10 +44,10 @@ class MultiScRNADataset(Dataset):
                 X = np.asarray(X)
 
             # Clip and cast to smallest possible int type
-            X = np.clip(X, a_min=0, a_max=N_CLASSES - 2).astype(np.int64)  # values 0-5 (or 6)
+            X = np.clip(X, a_min=0, a_max=N_CLASSES - 2).astype(np.uint8)  # values 0-5 (or 6)
 
             # Add <EOS> token at the end of each sequence
-            eos_column = np.zeros((X.shape[0], 1), dtype=np.int64)
+            eos_column = np.zeros((X.shape[0], 1), dtype=np.uint8)
             X = np.concatenate([X, eos_column], axis=1)
 
             tensor_data = torch.from_numpy(X)  # dtype=torch.uint8
