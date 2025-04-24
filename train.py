@@ -4,19 +4,15 @@ import logging
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
-from torchvision import transforms
 
 from data.multi_file_dataset import MultiScRNADataset as scRNADataset
 from model.performer.performer import PerformerLM
 from utils import save_ckpt
-import scanpy as sc
 
 from torch.optim import Adam
 from masking import data_mask
-from sklearn.model_selection import train_test_split
 import mlflow
 import dagshub
 
@@ -29,6 +25,7 @@ torch.set_float32_matmul_precision('high')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 dagshub.init("scFoundationModel", "rbonazzola", mlflow=True)
+
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
@@ -68,20 +65,12 @@ class Trainer:
     
 
     def _load_data(self, data_path):
+        
         logging.info("Loading data")
         start_time = time.time()
-        #if data_path.endswith("gz"):
-         #   import gzip
-          #  with gzip.open(data_path) as f:
-           #     data = sc.read_h5ad(f).X
-        #else:
-         #   data = sc.read_h5ad(data_path).X
-        
-        # data_train, data_val = train_test_split(data, test_size=0.05, random_state=SEED)
+
         self.train_dataset = scRNADataset(f"{args.data_path}/train")
         self.val_dataset = scRNADataset(f"{args.data_path}/val")
-        # self.train_dataset = scRNADataset(data_train, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
-        # self.val_dataset = scRNADataset(data_val, gene_csv=args.highly_variable_genes_file, top_n_genes=self.TOP_N_GENES)
         
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.BATCH_SIZE, num_workers=self.NUM_WORKERS)
         self.val_loader = DataLoader(self.val_dataset, batch_size=self.BATCH_SIZE, num_workers=self.NUM_WORKERS)
@@ -120,7 +109,7 @@ class Trainer:
            "learning_rate": self.LEARNING_RATE, 
            "batch_size": self.BATCH_SIZE,
            "n_batches": self.MAX_BATCHES,
-           "samples_per_epoch": len(self.train_dataset) if self.MAX_BATCHES is None else self.MAX_BATCHES * self.BATCH_SIZE,
+           "samples_per_epoch": len(self.train_dataset) if self.MAX_BATCHES is None else min(self.MAX_BATCHES * self.BATCH_SIZE, len(self.train_dataset)),
            "embedding_dim": self.model_args["dim"],
            "depth": self.model_args["depth"],
            "heads": self.model_args["heads"],
